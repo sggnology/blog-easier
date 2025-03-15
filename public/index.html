@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+        #response_board{
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        #search_form{
+            display: flex;
+            flex-flow: row;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #loading {
+            display: none;
+            border: 16px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 16px solid #3498db;
+            width: 60px;
+            height: 60px;
+            margin-bottom: 20px;
+            -webkit-animation: spin 2s linear infinite;
+            animation: spin 2s linear infinite;
+        }
+
+        @-webkit-keyframes spin {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chatbot-question {
+            align-self: flex-end;
+            background-color: #e0f7fa;
+            border-radius: 10px;
+            margin: 5px;
+            padding: 10px;
+            max-width: 60%;
+        }
+
+        .chatbot-answer {
+            align-self: flex-start;
+            background-color: #f1f8e9;
+            border-radius: 10px;
+            margin: 5px;
+            padding: 10px;
+            max-width: 60%;
+        }
+    </style>
+</head>
+
+<body>
+    <div style="width: 100%">
+        <h1>블로그 아이디어 생성기</h1>
+
+        <div id="response_board"></div>
+        <div style="display:flex; justify-content:center;">
+            <div id="loading"></div>
+        </div>
+
+        <form id="search_form">
+            <div style="display:flex; align-items:center; margin-right: 5px;">
+                <label for="search_keyword" style="margin-right: 3px;">검색어</label>
+                <textarea id="search_keyword" rows="2" cols="100"></textarea>
+            </div>
+
+            <div>
+                <button type="submit">검색</button>
+            </div>
+        </form>
+    </div>
+</body>
+
+<script>
+    const $response_board = document.querySelector("#response_board");
+    const $search_form = document.querySelector("#search_form");
+    const $loading = document.querySelector("#loading");
+    const $search_button = $search_form.querySelector("button[type='submit']");
+    const $search_textarea = document.querySelector("#search_keyword");
+
+    $search_textarea.addEventListener("keypress", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            $search_form.dispatchEvent(new Event("submit"));
+        }
+    });
+
+    $search_form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        $loading.style.display = "block";
+        $search_button.disabled = true;
+        $search_textarea.disabled = true;
+
+        const searchKeyword = $search_textarea.value;
+        addChatbotQuestion(searchKeyword);
+
+        $search_textarea.value = "";
+
+        const body = JSON.stringify({ keyword: searchKeyword });
+        try {
+            const response = await searchRequest(body);
+            addChatbotAnswer(response);
+        } catch (error) {
+            console.error("Error during fetch:", error);
+            addChatbotAnswer("오류로 인해 답변을 작성하지 못하였습니다.");
+        } finally {
+            $loading.style.display = "none";
+            $search_button.disabled = false;
+            $search_textarea.disabled = false;
+        }
+    });
+
+    function addChatbotQuestion(question) {
+        const questionElement = document.createElement("div");
+        questionElement.className = "chatbot-question";
+        questionElement.textContent = question;
+        $response_board.appendChild(questionElement);
+    }
+
+    function addChatbotAnswer(answer) {
+        const answerElement = document.createElement("div");
+        answerElement.className = "chatbot-answer";
+        answerElement.innerHTML = answer.replace(/(\n\n)/g, "$1<br><br>");
+        $response_board.appendChild(answerElement);
+    }
+
+    async function searchRequest(body) {
+        const url = "/api/normal";
+
+        const res = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: body
+        });
+
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const resJson = await res.json();
+        return resJson.response; // Assuming the response has a 'message' field
+    }
+</script>
+
+</html>

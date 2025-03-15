@@ -24,7 +24,7 @@
 	 */
 	 "ai": {
 		"binding": "AI"
-	 }
+	 },
 
 	/**
 	 * Environment Variables
@@ -40,7 +40,7 @@
 	 * Static Assets
 	 * https://developers.cloudflare.com/workers/static-assets/binding/
 	 */
-	// "assets": { "directory": "./public/", "binding": "ASSETS" },
+	"assets": { "directory": "./public/", "binding": "ASSETS" }
 
 	/**
 	 * Service Bindings (communicate between multiple Workers)
