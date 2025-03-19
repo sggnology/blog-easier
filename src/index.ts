@@ -7,9 +7,15 @@ app.get('/', async (c) => {
 	return c.html(html);
 })
 
-interface SimpleQueryParams {
+type SimpleQueryParams = {
 	keyword: string
 }
+
+const initialMessage: RoleScopedChatInput[] = [
+	{ role: "system", content: "마케팅 전문가로써 블로그 작성에 일가견이 있다. 1000자 이내로 답변하며 주로 어떻게 작성하면 좋을지 도움을 준다." }
+];
+
+let accumulatedMessages: RoleScopedChatInput[] = [];
 
 app.post('/api/normal', async (c) => {
 
@@ -21,13 +27,42 @@ app.post('/api/normal', async (c) => {
 		return c.json({ error: 'Keyword cannot be empty' }, 400);
 	}
 
-	const result = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+	accumulatedMessages = [
+		...accumulatedMessages,
+		{ role: "user", content: bodyParams.keyword },
+	]
+
+	const result: AiTextGenerationOutput = await c.env.AI.run("@cf/meta/llama-3.1-8b-instruct", {
+		max_tokens: 1024,
 		messages: [
-			{ role: "system", content: "마케팅 전문가로 블로그를 담당하고 있는 전문가" },
-			{ role: "user", content: bodyParams.keyword },
-			{ role: "assistant", content: "답변 글자수 460자, 제목과 내용에 대한 중제목 소제목 그리고 내용 자체는 요약해서" },
+			...initialMessage,
+			...accumulatedMessages
 		]
 	})
+
+	if (result instanceof ReadableStream) {
+		const reader = result.getReader();
+		let response_content = '';
+
+		const decoder = new TextDecoder();
+		while (true) {
+			const { value, done } = await reader.read();
+			if (done) break;
+			response_content += decoder.decode(value);
+		}
+
+		accumulatedMessages = [
+			...accumulatedMessages,
+			{ role: "assistant", content: response_content }
+		];
+	}
+	else {
+		accumulatedMessages = [
+			...accumulatedMessages,
+			{ role: "assistant", content: result?.response ?? "" }
+		];
+	}
+
 	return c.json(result);
 })
 

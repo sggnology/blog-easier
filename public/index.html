@@ -7,7 +7,7 @@
     <title>Document</title>
 
     <style>
-        #response_board{
+        #response_board {
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
@@ -16,7 +16,7 @@
             margin-bottom: 20px;
         }
 
-        #search_form{
+        #search_form {
             display: flex;
             flex-flow: row;
             justify-content: center;
@@ -36,13 +36,23 @@
         }
 
         @-webkit-keyframes spin {
-            0% { -webkit-transform: rotate(0deg); }
-            100% { -webkit-transform: rotate(360deg); }
+            0% {
+                -webkit-transform: rotate(0deg);
+            }
+
+            100% {
+                -webkit-transform: rotate(360deg);
+            }
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .chatbot-question {
@@ -136,10 +146,12 @@
 
         $search_textarea.value = "";
 
-        const body = JSON.stringify({ keyword: searchKeyword });
+        const body = JSON.stringify({
+            keyword: searchKeyword
+        });
         try {
             const response = await searchRequest(body);
-            addChatbotAnswer(response);
+            addChatbotAnswer(response);            
         } catch (error) {
             console.error("Error during fetch:", error);
             addChatbotAnswer("오류로 인해 답변을 작성하지 못하였습니다.");
